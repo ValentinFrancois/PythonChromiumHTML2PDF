@@ -1,13 +1,19 @@
 from typing import Optional, Callable
 import subprocess
+import logging
 
 from PythonChromiumHTML2PDF.chrome_process import ChromeProcess
 from PythonChromiumHTML2PDF.chrome_api import ChromeApi, ChromeApiCallback
 
 
+logger = logging.getLogger(__name__)
+
+
 def _get_path_for_command(command: str) -> Optional[str]:
     try:
-        return subprocess.check_output(['which', command])
+        return (subprocess.check_output(['which', command])
+                .decode('utf-8')
+                .replace('\n', ''))
     except Exception:
         return None
 
@@ -23,7 +29,7 @@ def print_to_pdf(
 ) -> str:
     if binary_path is None:
         installed_chromium_path = _get_path_for_command('chromium-browser')
-        installed_chrome_path = _get_path_for_command('google_chrome')
+        installed_chrome_path = _get_path_for_command('google-chrome')
         if not (installed_chromium_path or installed_chrome_path):
             raise ValueError(f'No Chrome or Chromium install found.')
         else:
@@ -40,10 +46,8 @@ def print_to_pdf(
             )
         except Exception:
             logs = chrome_api.get_chromium_logs()
-            self.base_logger.error(
-                f'An error happened. Chromium logs:\n{logs}')
+            logger.error(f'An error happened. Chromium logs:\n{logs}')
             raise
 
 
-if __name__ == '__main__':
-    print_to_pdf(input_url='http://example.org')
+

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChromeApiCallback(Callable):
-    def __call__(self, chrome_api: 'ChromeApi') -> Dict[str, obj]:
+    def __call__(self, chrome_api: 'ChromeApi') -> Dict[str, object]:
         # use the chrome_api for custom checks on the page
         return {}
 
@@ -147,6 +147,8 @@ class ChromeApi(ChromeInterface):
 
         # run the optional callback function e.g. to wait for specific selector
         if callback is not None:
+            if isinstance(callback, type):
+                callback = callback()
             extra_args: Dict[str, obj] = callback(self)
             kwargs.update(extra_args)
 
