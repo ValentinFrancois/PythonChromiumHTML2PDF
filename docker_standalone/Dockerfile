@@ -47,3 +47,18 @@ RUN apt-get update \
     && apt-get install -qqy $devDependencies --no-install-recommends \
     && pip3 install -r requirements.txt
 
+
+FROM runtime as test
+
+COPY tests/requirements.txt test_requirements.txt
+RUN pip3 install -r test_requirements.txt
+
+COPY command command
+COPY tests tests
+CMD ["nosetests"]
+
+
+FROM runtime as command
+COPY command/main.py main.py
+ENTRYPOINT ["python3", "main.py"]
+
