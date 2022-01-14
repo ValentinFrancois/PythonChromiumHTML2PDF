@@ -25,4 +25,4 @@ RUN pip3 install -r requirements.txt
 COPY PythonChromiumHTML2PDF PythonChromiumHTML2PDF
 
 COPY tests tests
-CMD ['nosetests']
+CMD ["nosetests"]

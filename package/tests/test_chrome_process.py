@@ -9,7 +9,7 @@ from PythonChromiumHTML2PDF.chrome_api import ChromeApi
 
 
 class TestPrintToPDF(unittest.TestCase):
-    """Assumes """
+    """Assumes a Chrome/Chromium browser is installed"""
 
     def setUp(self) -> None:
         self.html_file = tempfile.mkstemp(suffix='.html')[1]

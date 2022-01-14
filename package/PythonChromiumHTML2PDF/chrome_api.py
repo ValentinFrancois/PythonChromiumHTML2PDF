@@ -66,6 +66,10 @@ class ChromeApi(ChromeInterface):
 
     def open_file(self, html_path, timeout: Optional[int] = None):
         html_abs_path = os.path.abspath(html_path)
+        # chrome will display a blank page if the file doesn't exit
+        # we have to detect the issue beforehand to raise an error.
+        if not os.path.isfile(html_abs_path):
+            raise FileNotFoundError(html_abs_path)
         self.open_url(f'file://{html_abs_path}', timeout)
 
     def wait_for_selector(self,

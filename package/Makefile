@@ -1,7 +1,7 @@
 MAKEFLAGS =+ -rR --warn-undefined-variables
 
 PACKAGE = PythonChromiumHTML2PDF
-IMAGE_BASE_NAME = python-chromium-html2pdf/tests
+IMAGE_BASE_NAME = python-chromium-html2pdf-tests
 IMAGE_TAG = $(shell git describe --tags --always --dirty)
 
 build:
