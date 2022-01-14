@@ -39,4 +39,11 @@ RUN apt-get update \
 COPY --from=minimal-chromium $CHROMIUM_INSTALL_DIR $CHROMIUM_INSTALL_DIR
 RUN ln -s $CHROMIUM_INSTALL_DIR/chromium /usr/bin/chromium
 
-#COPY
+WORKDIR /src
+
+COPY requirements.txt requirements.txt
+RUN apt-get update \
+    && devDependencies='procps git' \
+    && apt-get install -qqy $devDependencies --no-install-recommends \
+    && pip3 install -r requirements.txt
+

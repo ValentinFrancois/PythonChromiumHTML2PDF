@@ -5,7 +5,7 @@ IMAGE_BASE_NAME = python-chromium-html2pdf/standalone
 IMAGE_TAG = $(shell git describe --tags --always --dirty)
 
 build:
-	docker build -t $(IMAGE_BASE_NAME):$(IMAGE_TAG) -f Dockerfile ..
+	docker build -t $(IMAGE_BASE_NAME):$(IMAGE_TAG) -f Dockerfile .
 
 test:
 	docker run $(IMAGE_BASE_NAME):$(IMAGE_TAG) \
