@@ -13,5 +13,7 @@ setup(
     maintainer='Valentin François',
     url='https://github.com/ValentinFrancois/PythonChromiumHTML2PDF',
     packages=['PythonChromiumHTML2PDF'],
-    install_requires=['git+git://github.com/ValentinFrancois/PyChromeDevTools']
+    install_requires=[
+        'PyChromeDevTools '
+        '@ git+https://github.com/ValentinFrancois/PyChromeDevTools']
 )
