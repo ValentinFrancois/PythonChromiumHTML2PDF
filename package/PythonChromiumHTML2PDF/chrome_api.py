@@ -1,20 +1,37 @@
+"""Defines common manipulations of a browser tab via a `ChromeApi` wrapper
+class that internally uses the Chrome DevTools Protocol (CDP).
+
+`ChromeApi` inherits from the `ChromeInterface` class of the PyChromeDevTools
+package, which handles the low-level communication with the browser through a
+websocket.
+"""
+
 from typing import Optional, Callable, Dict
 
 import os
 import time
 import base64
 import re
-import logging
 
 from PyChromeDevTools import ChromeInterface
 
 
-logger = logging.getLogger(__name__)
-
-
 class ChromeApiCallback(Callable):
+    """Defines a way to execute extra steps between opening the HTML page
+    and saving it to PDF.
+
+    If passed to `ChromeApi.print_to_pdf(...)`, such `ChromeApiCallback`
+    will be called with `self` as argument right after opening the input page.
+    It can then use the methods of `ChromeApi` to perform extra actions like
+    waiting for a specific CSS selector, executing JavaScript code, etc.
+
+    The return value is a dict containing optional arguments to the
+    `Page.printToPDF` function of the CDP. This leaves the possibility to
+    override some arguments dynamically depending on the content of the page
+    (for instance the `scale` argument could be calculated from `body.width`).
+    """
     def __call__(self, chrome_api: 'ChromeApi') -> Dict[str, object]:
-        # use the chrome_api for custom checks on the page
+        # use the chrome_api for custom actions on the page
         return {}
 
 
@@ -28,7 +45,7 @@ class ChromeApi(ChromeInterface):
     def _dev_tools_protocol_error(self, e: Exception, response):
         raise RuntimeError(
             f'{e.__class__.__name__}: {e}'
-            f'\nResponse from Chromium:'
+            f'\nResponse from Chrome/Chromium (version {self.version}):'
             f'\n{response}')
 
     def get_browser_version(self):
@@ -36,6 +53,7 @@ class ChromeApi(ChromeInterface):
         try:
             version_str = return_value['result']['product']
         except Exception as e:
+            self.version = 'unknown'
             self._dev_tools_protocol_error(e, response)
 
         version = re.findall('([0-9\\.]+)|$', version_str)[0]
@@ -117,9 +135,7 @@ class ChromeApi(ChromeInterface):
                      timeout: Optional[int] = None,
                      callback: Optional[ChromeApiCallback] = None,
                      **kwargs) -> str:
-        """
-        **kwargs: optional args for the Page.printToPDF() function
-
+        """**kwargs: optional args for the Page.printToPDF() function
         """
         self.Network.enable()
         self.Page.enable()
@@ -149,7 +165,7 @@ class ChromeApi(ChromeInterface):
         if callback is not None:
             if isinstance(callback, type):
                 callback = callback()
-            extra_args: Dict[str, obj] = callback(self)
+            extra_args: Dict[str, object] = callback(self)
             kwargs.update(extra_args)
 
         # force rendering the page - prevents potential bugs with font display

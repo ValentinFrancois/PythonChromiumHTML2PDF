@@ -1,16 +1,30 @@
+"""Defines a context manager class `ChromeProcess` that takes care of
+starting/stopping a Chrome/Chromium process in headless mode.
+"""
 from typing import Optional, List, Tuple, IO
 
 import os
+import subprocess  # nosec: B404
 import tempfile
 import signal
 import time
-from subprocess import Popen  # nosec: B404
 import logging
+
 
 from PythonChromiumHTML2PDF.chrome_api import ChromeApi
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_path_for_command(command: str) -> Optional[str]:
+    try:
+        return (subprocess.check_output(['which', command],  # nosec: # B607
+                                        shell=False)
+                .decode('utf-8')
+                .replace('\n', ''))
+    except Exception:
+        return None
 
 
 class ChromeProcess:
@@ -31,12 +45,16 @@ class ChromeProcess:
     ]
 
     def __init__(self,
-                 binary_path: str,
+                 binary_path: Optional[str] = None,
                  port: Optional[int] = None,
                  timeout: Optional[float] = None,
                  flags: Optional[List[str]] = None):
+
+        if binary_path is None:
+            binary_path = self.find_installed_chrome_path()
+
         return_values = self.start_chrome(binary_path, port, flags)
-        self.chrome_process: Popen = return_values[0]
+        self.chrome_process: subprocess.Popen = return_values[0]
         self.log_file: IO = return_values[1]
         self.log_path: str = return_values[2]
         self.pid: int = self.chrome_process.pid
@@ -56,11 +74,22 @@ class ChromeProcess:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.terminate()
 
+    @staticmethod
+    def find_installed_chrome_path() -> str:
+        potential_commands = ['chromium-browser', 'google-chrome',
+                              'chromium', 'chrome']
+        for command in potential_commands:
+            installed_binary_path = _get_path_for_command(command)
+            if installed_binary_path is not None:
+                return installed_binary_path
+        raise ValueError('No Chrome or Chromium install found.')
+
     def start_chrome(
             self,
             binary_path,
             port: Optional[int] = None,
-            flags: Optional[List[str]] = None) -> Tuple[Popen, IO, str]:
+            flags: Optional[List[str]] = None
+    ) -> Tuple[subprocess.Popen, IO, str]:
         _port = port if port is not None else self.DEFAULT_PORT
         cmd = [
             os.path.abspath(binary_path),
@@ -71,7 +100,8 @@ class ChromeProcess:
         log_path = tempfile.mkstemp()[1]
         log_file = open(log_path, 'w')
         return (
-            Popen(cmd, stdout=log_file, stderr=log_file, shell=False),
+            subprocess.Popen(  # nosec: B603
+                cmd, stdout=log_file, stderr=log_file, shell=False),
             log_file,
             log_path
         )
@@ -102,7 +132,7 @@ class ChromeProcess:
         try:
             self.api.close()
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
 
         # then stop the chromium process
         try:
@@ -113,7 +143,7 @@ class ChromeProcess:
                 logger.warning(e)
                 os.kill(self.pid, signal.SIGKILL)
             except Exception as e_:
-                logger.error(e_)
+                logger.exception(e_)
         finally:
             self.chrome_process = None
 
@@ -122,6 +152,6 @@ class ChromeProcess:
             self.log_file.close()
             os.remove(self.log_path)
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
 
         self.terminated = True
