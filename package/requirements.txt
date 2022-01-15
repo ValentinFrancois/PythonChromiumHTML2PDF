@@ -1,1 +1,1 @@
-git+git://github.com/ValentinFrancois/PyChromeDevTools
+git+git://github.com/ValentinFrancois/PyChromeDevTools#egg=PyChromeDevTools
